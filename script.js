@@ -7,13 +7,13 @@ const contentTypeSelect = document.getElementById('contentType');
 const calculateBtn = document.getElementById('calculateBtn');
 const resultsTableBody = document.querySelector('#resultsTable tbody');
 const downloadBtn = document.getElementById('downloadBtn');
+const downloadXlsxBtn = document.getElementById('downloadXlsxBtn');
 
 // 상태 변수
 let rawData = [];
-let filteredData = [];
 let results = [];
 
-// CSV 파일 업로드 & 파싱
+// CSV 파일 업로드
 csvInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
@@ -37,7 +37,6 @@ function parseCSV(file) {
   });
 }
 
-// CSV 필드 정제 함수
 function cleanRawData(data) {
   return data.map(row => ({
     Handle: row['2. Tiktok Handle'] || '',
@@ -51,30 +50,8 @@ function cleanRawData(data) {
   }));
 }
 
-// 필터 적용 함수
-function applyFilters() {
-  const selectedGender = genderSelect.value;
-  const selectedAge = ageSelect.value;
-  const selectedCountry = countrySelect.value;
-  const selectedContentType = contentTypeSelect.value;
-
-  filteredData = rawData.filter(item => {
-    const genderMatch = selectedGender === '무관' || item.Gender === selectedGender;
-    const ageMatch = selectedAge === '무관' || item.Age === selectedAge;
-    const countryMatch = selectedCountry === '무관' || item.Country === selectedCountry;
-    const contentMatch = selectedContentType === '무관' || item.ContentType === selectedContentType;
-
-    return genderMatch && ageMatch && countryMatch && contentMatch;
-  });
-
-  alert(`필터 적용 후 ${filteredData.length}명 남았습니다.`);
-  console.log('필터링된 데이터:', filteredData);
-}
-
-// 점수 계산 함수
 function calculateScores() {
   results = rawData.map(item => {
-    // Classic 점수
     const followerScore =
       item.Followers < 1000 ? 30 :
       item.Followers < 3000 ? 35 :
@@ -95,13 +72,11 @@ function calculateScores() {
     else if (classicScore >= 70) classicGrade = 'Classic';
     else classicGrade = 'Low';
 
-    // 필터값 가져오기
     const g = genderSelect.value;
     const a = ageSelect.value;
     const c = countrySelect.value;
     const ct = contentTypeSelect.value;
 
-    // 브랜드 커스텀 점수
     let customScore = 0;
     customScore += (g === '무관' || item.Gender === g) ? 15 : 0;
     customScore += (a === '무관' || item.Age === a) ? 15 : 0;
@@ -137,8 +112,6 @@ function calculateScores() {
   console.log('점수 계산 결과:', results);
 }
 
-
-// 결과 테이블 출력 함수
 function renderTable() {
   resultsTableBody.innerHTML = '';
 
@@ -180,14 +153,12 @@ function renderTable() {
   });
 }
 
-// CSV 다운로드 함수
 function downloadCSV() {
   if (results.length === 0) {
     alert("다운로드할 데이터가 없습니다.");
     return;
   }
 
-  // 🔹 파일명 생성 (이전 기능 그대로 유지)
   const originalName = csvInput.files[0]?.name?.replace(/\.[^/.]+$/, '') || 'engagement_scores';
   const now = new Date();
   const timestamp = now.getFullYear().toString()
@@ -198,12 +169,10 @@ function downloadCSV() {
     + String(now.getSeconds()).padStart(2, '0');
   const finalFileName = `${originalName}_${timestamp}.csv`;
 
-  // 🔹 header: rawData의 키 + 결과 컬럼
   const baseHeaders = Object.keys(rawData[0]);
   const scoreHeaders = ['Classic Score', 'Classic Grade', 'Conversion Score', 'Conversion Grade'];
   const fullHeader = [...baseHeaders, ...scoreHeaders];
 
-  // 🔹 row 병합: rawData + 결과
   const fullRows = rawData.map((item, index) => {
     const result = results[index] || {};
     const row = baseHeaders.map(k => item[k]);
@@ -232,16 +201,6 @@ function downloadCSV() {
   link.click();
   document.body.removeChild(link);
 }
-
-
-// 이벤트 바인딩
-calculateBtn.addEventListener('click', () => {
-  calculateScores();  // 전체 rawData 대상으로 점수 계산
-  renderTable();      // 전체 결과 출력
-});
-
-
-downloadBtn.addEventListener('click', downloadCSV);
 
 function downloadXLSX() {
   if (results.length === 0) {
@@ -274,4 +233,10 @@ function downloadXLSX() {
   XLSX.writeFile(workbook, filename);
 }
 
-document.getElementById('downloadXlsxBtn').addEventListener('click', downloadXLSX);
+calculateBtn.addEventListener('click', () => {
+  calculateScores();
+  renderTable();
+});
+
+downloadBtn.addEventListener('click', downloadCSV);
+downloadXlsxBtn.addEventListener('click', downloadXLSX);
