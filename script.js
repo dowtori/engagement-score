@@ -187,31 +187,52 @@ function downloadCSV() {
     return;
   }
 
-  const header = ['TikTok Handle', 'Classic Score', 'Classic Grade', 'Conversion Score', 'Conversion Grade'];
-  const rows = results.map(r => [
-    r.Handle,
-    r.ClassicScore,
-    r.ClassicGrade,
-    r.ConversionScore,
-    r.ConversionGrade
-  ]);
+  // 🔹 파일명 생성 (이전 기능 그대로 유지)
+  const originalName = csvInput.files[0]?.name?.replace(/\.[^/.]+$/, '') || 'engagement_scores';
+  const now = new Date();
+  const timestamp = now.getFullYear().toString()
+    + String(now.getMonth() + 1).padStart(2, '0')
+    + String(now.getDate()).padStart(2, '0') + '_'
+    + String(now.getHours()).padStart(2, '0')
+    + String(now.getMinutes()).padStart(2, '0')
+    + String(now.getSeconds()).padStart(2, '0');
+  const finalFileName = `${originalName}_${timestamp}.csv`;
 
-  const csvContent = [header, ...rows]
-    .map(e => e.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+  // 🔹 header: rawData의 키 + 결과 컬럼
+  const baseHeaders = Object.keys(rawData[0]);
+  const scoreHeaders = ['Classic Score', 'Classic Grade', 'Conversion Score', 'Conversion Grade'];
+  const fullHeader = [...baseHeaders, ...scoreHeaders];
+
+  // 🔹 row 병합: rawData + 결과
+  const fullRows = rawData.map((item, index) => {
+    const result = results[index] || {};
+    const row = baseHeaders.map(k => item[k]);
+    row.push(
+      result.ClassicScore ?? '',
+      result.ClassicGrade ?? '',
+      result.ConversionScore ?? '',
+      result.ConversionGrade ?? ''
+    );
+    return row;
+  });
+
+  const csvContent = [fullHeader, ...fullRows]
+    .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   const url = URL.createObjectURL(blob);
 
   link.setAttribute('href', url);
-  link.setAttribute('download', 'engagement_scores.csv');
+  link.setAttribute('download', finalFileName);
   link.style.visibility = 'hidden';
 
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
+
 
 // 이벤트 바인딩
 calculateBtn.addEventListener('click', () => {
