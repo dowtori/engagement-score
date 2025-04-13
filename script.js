@@ -243,49 +243,35 @@ calculateBtn.addEventListener('click', () => {
 
 downloadBtn.addEventListener('click', downloadCSV);
 
-document.getElementById('showCsvBtn').addEventListener('click', () => {
-  const viewerSection = document.getElementById('csvViewerSection');
-  const viewerTable = document.getElementById('csvViewerTable');
-  const thead = viewerTable.querySelector('thead');
-  const tbody = viewerTable.querySelector('tbody');
-
-  // 토글 표시
-  viewerSection.style.display = viewerSection.style.display === 'none' ? 'block' : 'none';
-
-  if (viewerSection.style.display === 'block') {
-    // 테이블 초기화
-    thead.innerHTML = '';
-    tbody.innerHTML = '';
-
-    if (rawData.length === 0) {
-      const emptyRow = document.createElement('tr');
-      const td = document.createElement('td');
-      td.colSpan = 1;
-      td.textContent = '업로드된 데이터가 없습니다.';
-      emptyRow.appendChild(td);
-      tbody.appendChild(emptyRow);
-      return;
-    }
-
-    // 헤더 생성
-    const headers = Object.keys(rawData[0]);
-    const headRow = document.createElement('tr');
-    headers.forEach(h => {
-      const th = document.createElement('th');
-      th.textContent = h;
-      headRow.appendChild(th);
-    });
-    thead.appendChild(headRow);
-
-    // 데이터 행 생성
-    rawData.forEach(row => {
-      const tr = document.createElement('tr');
-      headers.forEach(h => {
-        const td = document.createElement('td');
-        td.textContent = row[h];
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
+function downloadXLSX() {
+  if (results.length === 0) {
+    alert("다운로드할 데이터가 없습니다.");
+    return;
   }
-});
+
+  const baseHeaders = Object.keys(rawData[0]);
+  const scoreHeaders = ['Classic Score', 'Classic Grade', 'Conversion Score', 'Conversion Grade'];
+
+  const fullData = rawData.map((item, index) => {
+    const result = results[index] || {};
+    return {
+      ...item,
+      'Classic Score': result.ClassicScore ?? '',
+      'Classic Grade': result.ClassicGrade ?? '',
+      'Conversion Score': result.ConversionScore ?? '',
+      'Conversion Grade': result.ConversionGrade ?? ''
+    };
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(fullData, { header: [...baseHeaders, ...scoreHeaders] });
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Engagement Scores");
+
+  const now = new Date();
+  const timestamp = now.toISOString().slice(0,19).replace(/[-:T]/g, '');
+  const filename = `${csvInput.files[0]?.name?.replace(/\.[^/.]+$/, '') || 'engagement_scores'}_${timestamp}.xlsx`;
+
+  XLSX.writeFile(workbook, filename);
+}
+
+document.getElementById('downloadXlsxBtn').addEventListener('click', downloadXLSX);
