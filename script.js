@@ -242,3 +242,50 @@ calculateBtn.addEventListener('click', () => {
 
 
 downloadBtn.addEventListener('click', downloadCSV);
+
+document.getElementById('showCsvBtn').addEventListener('click', () => {
+  const viewerSection = document.getElementById('csvViewerSection');
+  const viewerTable = document.getElementById('csvViewerTable');
+  const thead = viewerTable.querySelector('thead');
+  const tbody = viewerTable.querySelector('tbody');
+
+  // 토글 표시
+  viewerSection.style.display = viewerSection.style.display === 'none' ? 'block' : 'none';
+
+  if (viewerSection.style.display === 'block') {
+    // 테이블 초기화
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+
+    if (rawData.length === 0) {
+      const emptyRow = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 1;
+      td.textContent = '업로드된 데이터가 없습니다.';
+      emptyRow.appendChild(td);
+      tbody.appendChild(emptyRow);
+      return;
+    }
+
+    // 헤더 생성
+    const headers = Object.keys(rawData[0]);
+    const headRow = document.createElement('tr');
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+
+    // 데이터 행 생성
+    rawData.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(h => {
+        const td = document.createElement('td');
+        td.textContent = row[h];
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+});
