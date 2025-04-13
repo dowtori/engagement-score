@@ -73,7 +73,8 @@ function applyFilters() {
 
 // 점수 계산 함수
 function calculateScores() {
-  results = filteredData.map(item => {
+  results = rawData.map(item => {
+    // Classic 점수
     const followerScore =
       item.Followers < 1000 ? 30 :
       item.Followers < 3000 ? 35 :
@@ -94,12 +95,14 @@ function calculateScores() {
     else if (classicScore >= 70) classicGrade = 'Classic';
     else classicGrade = 'Low';
 
-    let customScore = 0;
+    // 필터값 가져오기
     const g = genderSelect.value;
     const a = ageSelect.value;
     const c = countrySelect.value;
     const ct = contentTypeSelect.value;
 
+    // 브랜드 커스텀 점수
+    let customScore = 0;
     customScore += (g === '무관' || item.Gender === g) ? 15 : 0;
     customScore += (a === '무관' || item.Age === a) ? 15 : 0;
     customScore += (c === '무관' || item.Country === c) ? 15 : 0;
@@ -133,6 +136,7 @@ function calculateScores() {
   alert(`총 ${results.length}건의 점수가 계산되었습니다.`);
   console.log('점수 계산 결과:', results);
 }
+
 
 // 결과 테이블 출력 함수
 function renderTable() {
@@ -211,9 +215,9 @@ function downloadCSV() {
 
 // 이벤트 바인딩
 calculateBtn.addEventListener('click', () => {
-  applyFilters();
-  calculateScores();
-  renderTable();
+  calculateScores();  // 전체 rawData 대상으로 점수 계산
+  renderTable();      // 전체 결과 출력
 });
+
 
 downloadBtn.addEventListener('click', downloadCSV);
