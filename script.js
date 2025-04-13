@@ -18,6 +18,9 @@ csvInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (file) {
     parseCSV(file);
+    calculateBtn.disabled = false;
+    downloadBtn.disabled = false;
+    downloadXlsxBtn.disabled = false;
   }
 });
 
