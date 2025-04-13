@@ -1,43 +1,82 @@
-/* 전체 레이아웃 */
+/* 기본 레이아웃 및 타이포그래피 */
 body {
-  font-family: 'Noto Sans KR', sans-serif;
-  margin: 2rem;
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
   background-color: #f9f9f9;
+  margin: 0;
+  padding: 0;
   color: #333;
 }
 
-h1 {
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
+/* 헤더 */
+header {
+  background-color: #1e88e5;
+  color: white;
+  padding: 2rem;
+  text-align: center;
 }
 
-p {
-  margin-bottom: 2rem;
-  color: #555;
+header h1 {
+  margin: 0;
+  font-size: 2rem;
 }
 
-/* 파일 업로드 */
-#file-upload-section {
-  margin-bottom: 1.5rem;
-}
-
-/* 드롭다운 필터 */
-#customization-section select {
-  padding: 0.5rem;
-  margin-right: 0.5rem;
+header p {
+  margin-top: 0.5rem;
   font-size: 1rem;
 }
 
-/* 계산 및 다운로드 버튼 정렬 */
+/* 섹션 카드 느낌 */
+section {
+  padding: 1.5rem 2rem;
+  margin-bottom: 1rem;
+  background-color: white;
+  border-bottom: 1px solid #ddd;
+}
+
+/* 필터 라벨 + 셀렉트 */
+#filter-section label {
+  display: inline-block;
+  margin-right: 1rem;
+  margin-bottom: 1rem;
+}
+
+select {
+  margin-left: 0.5rem;
+  padding: 0.3rem;
+  font-size: 1rem;
+}
+
+/* 결과 테이블 */
+#resultsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+#resultsTable th,
+#resultsTable td {
+  border: 1px solid #ccc;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+#resultsTable th {
+  background-color: #f1f1f1;
+}
+
+#resultsTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* 버튼 스타일 (기존 버튼은 제거하고 아래 버튼 클래스만 사용) */
 #calculate-section {
   margin-top: 1.5rem;
-  margin-bottom: 2rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-/* 공통 버튼 스타일 */
+/* 개선된 버튼 공통 스타일 */
 .action-btn {
   padding: 0.6rem 1.2rem;
   font-size: 1rem;
@@ -53,7 +92,7 @@ p {
   cursor: not-allowed;
 }
 
-/* 각 버튼 색상 */
+/* 각 버튼별 색상 */
 .action-btn.blue {
   background-color: #1e88e5;
 }
@@ -76,29 +115,4 @@ p {
 
 .action-btn.purple:hover:not(:disabled) {
   background-color: #6a1b9a;
-}
-
-/* 결과 테이블 */
-#results-section {
-  margin-top: 2rem;
-}
-
-#resultsTable {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  background-color: #fff;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.05);
-}
-
-#resultsTable th,
-#resultsTable td {
-  border: 1px solid #ddd;
-  padding: 0.75rem;
-  text-align: center;
-}
-
-#resultsTable th {
-  background-color: #f1f1f1;
-  font-weight: bold;
 }
