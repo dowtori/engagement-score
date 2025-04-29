@@ -3,88 +3,48 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>더블 인게이지먼트 지수 분석</title>
+  <title>ENGAGE+ 점수 분석</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
+  <!-- 1. Header Section -->
   <header>
-    <h1>더블 인게이지먼트 지수 분석</h1>
-    <p>파일을 업로드하고, 점수를 계산하여 결과를 다운로드 받으세요.</p>
+    <h1>ENGAGE+ 점수 분석</h1>
+    <p>CSV 파일을 업로드하고 점수를 계산하세요.</p>
   </header>
 
+  <!-- 2. File Upload Section -->
   <section id="upload-section">
     <h2>CSV 파일 업로드</h2>
     <input type="file" id="csvFileInput" accept=".csv" />
   </section>
 
-  <section id="filter-section">
-    <h2>필터 옵션 선택</h2>
-    <label>성별:
-      <select id="gender">
-        <option value="무관">무관</option>
-        <option value="Female">Female</option>
-        <option value="Male">Male</option>
-      </select>
-    </label>
-
-    <label>나이대:
-      <select id="age">
-        <option value="무관">무관</option>
-        <option value="20s">20s</option>
-        <option value="30s">30s</option>
-        <option value="40s">40s</option>
-        <option value="50+">50+</option>
-      </select>
-    </label>
-
-    <label>국가:
-      <select id="country">
-        <option value="무관">무관</option>
-        <option value="Philippines">Philippines</option>
-        <option value="Global">Global</option>
-      </select>
-    </label>
-
-    <label>콘텐츠 타입:
-      <select id="contentType">
-        <option value="무관">무관</option>
-        <option value="리뷰">리뷰</option>
-        <option value="챌린지">챌린지</option>
-        <option value="비포&애프터">비포&애프터</option>
-        <option value="튜토리얼(GRWM)">튜토리얼(GRWM)</option>
-      </select>
-    </label>
-  </section>
-
+  <!-- 3. Calculate Section -->
   <section id="calculate-section">
-    <button id="calculateBtn">점수 계산하기</button>
-    <button id="downloadBtn">결과 CSV 다운로드</button>
-    <button id="downloadXlsxBtn">엑셀(.xlsx) 다운로드</button>
+    <button id="calculateBtn" disabled>Calculate Scores</button>
   </section>
 
-  <section id="results-section">
+  <!-- 4. Results Table Section -->
+  <section id="results-section" style="display: none;">
     <h2>결과</h2>
     <table id="resultsTable">
       <thead>
         <tr>
           <th>TikTok Handle</th>
-          <th>Classic Score</th>
-          <th>Classic Grade</th>
-          <th>Conversion Score</th>
-          <th>Conversion Grade</th>
+          <th>ENGAGE+ Score</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
   </section>
 
-<!-- 예전 다운로드 버튼 섹션: 지금은 사용 안 함
-<section id="download-section">
-  ...
-</section>
--->
+  <!-- 5. Download Section -->
+  <section id="download-section">
+    <button id="downloadBtn" disabled>Download CSV</button>
+    <button id="downloadXlsxBtn" disabled>Download XLSX</button>
+  </section>
 
   <script src="script.js"></script>
 </body>

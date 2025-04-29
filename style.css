@@ -75,3 +75,10 @@ button:hover {
 #resultsTable tr:nth-child(even) {
   background-color: #f9f9f9;
 }
+
+/* 비활성화된 버튼 상태 */
+button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}

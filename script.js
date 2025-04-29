@@ -1,160 +1,128 @@
 // DOM 요소
 const csvInput = document.getElementById('csvFileInput');
-const genderSelect = document.getElementById('gender');
-const ageSelect = document.getElementById('age');
-const countrySelect = document.getElementById('country');
-const contentTypeSelect = document.getElementById('contentType');
 const calculateBtn = document.getElementById('calculateBtn');
-const resultsTableBody = document.querySelector('#resultsTable tbody');
 const downloadBtn = document.getElementById('downloadBtn');
 const downloadXlsxBtn = document.getElementById('downloadXlsxBtn');
+const resultsTableBody = document.querySelector('#resultsTable tbody');
+const resultsSection = document.getElementById('results-section');
 
-// 상태 변수
+// 데이터 저장용
 let rawData = [];
 let results = [];
 
-// CSV 파일 업로드
+// 파일 업로드 → CSV 파싱
 csvInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
-  if (file) {
-    parseCSV(file);
-    calculateBtn.disabled = false;
-    downloadBtn.disabled = false;
-    downloadXlsxBtn.disabled = false;
+  if (file && file.type === "text/csv") {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function (resultsParsed) {
+        const parsed = resultsParsed.data;
+        rawData = cleanData(parsed);
+        alert(`총 ${rawData.length}명의 인플루언서가 업로드되었습니다.`);
+        console.log("업로드된 데이터:", rawData);
+        calculateBtn.disabled = false;
+        downloadBtn.disabled = false;
+        downloadXlsxBtn.disabled = false;
+      },
+      error: function (err) {
+        alert("CSV 파싱 중 오류 발생: " + err.message);
+      }
+    });
+  } else {
+    alert("CSV 파일만 업로드 가능합니다.");
   }
 });
 
-function parseCSV(file) {
-  Papa.parse(file, {
-    header: true,
-    skipEmptyLines: true,
-    complete: function (results) {
-      const parsed = results.data;
-      rawData = cleanRawData(parsed);
-      alert(`총 ${rawData.length}명의 인플루언서가 업로드되었습니다.`);
-      console.log('정제된 데이터:', rawData);
-    },
-    error: function (err) {
-      alert('CSV 파싱 중 오류 발생: ' + err.message);
-    }
-  });
-}
-
-function cleanRawData(data) {
+// 데이터 정제 함수
+function cleanData(data) {
   return data.map(row => ({
     Handle: row['2. Tiktok Handle'] || '',
-    Gender: row['F/M'] || '',
-    Age: row['Ages'] || '',
-    Country: row['4. Country/ Location'] || '',
-    ContentType: row['콘텐츠 타입'] || '',
-    Followers: parseInt((row['Followers'] || '0').toString().replace(/,/g, '')),
-    AvgViews: parseInt((row['Ave. View'] || '0').toString().replace(/,/g, '')),
-    Likes: parseInt((row['좋아요 수'] || '0').toString().replace(/,/g, ''))
+    Followers: parseInt((row['Followers'] || '0').replace(/,/g, '')),
+    Likes: parseInt((row['좋아요 수'] || '0').replace(/,/g, '')),
+    Views: parseInt((row['Ave. View'] || '0').replace(/,/g, ''))
   }));
 }
 
-function calculateScores() {
+// 점수 계산 로직
+function calculateEngageScores() {
   results = rawData.map(item => {
+    const followers = item.Followers || 0;
+    const likes = item.Likes || 0;
+    const views = item.Views || 1; // 0 방지
+
+    // Followers 점수 (50점 만점)
     const followerScore =
-      item.Followers < 1000 ? 30 :
-      item.Followers < 3000 ? 35 :
-      item.Followers < 10000 ? 40 :
-      item.Followers < 30000 ? 45 : 50;
+      followers < 1000 ? 35 :
+      followers < 5000 ? 40 :
+      followers < 10000 ? 45 : 50;
 
-    const viewScore =
-      item.AvgViews < 100 ? 30 :
-      item.AvgViews < 500 ? 35 :
-      item.AvgViews < 1000 ? 40 :
-      item.AvgViews < 2000 ? 45 : 50;
+    // Likes 점수 (20점 만점)
+    const likeScore =
+      likes < 100 ? 10 :
+      likes < 1000 ? 15 : 20;
 
-    const classicScore = followerScore + viewScore;
+    // EPR (Engagement Performance Ratio) 점수 (30점 만점)
+    const epr = (likes / views) * 100; // %로 환산
+    const eprScore =
+      epr < 10 ? 15 :
+      epr < 20 ? 20 :
+      epr < 30 ? 25 : 30;
 
-    let classicGrade = '';
-    if (classicScore >= 95) classicGrade = 'Classic++';
-    else if (classicScore >= 85) classicGrade = 'Classic+';
-    else if (classicScore >= 70) classicGrade = 'Classic';
-    else classicGrade = 'Low';
-
-    const g = genderSelect.value;
-    const a = ageSelect.value;
-    const c = countrySelect.value;
-    const ct = contentTypeSelect.value;
-
-    let customScore = 0;
-    customScore += (g === '무관' || item.Gender === g) ? 15 : 0;
-    customScore += (a === '무관' || item.Age === a) ? 15 : 0;
-    customScore += (c === '무관' || item.Country === c) ? 15 : 0;
-    customScore += (ct === '무관' || item.ContentType === ct) ? 15 : 0;
-
-    const likeRate = item.Followers > 0 ? (item.Likes / item.Followers) * 100 : 0;
-
-    let likeScore = 0;
-    if (likeRate < 100) likeScore = 10;
-    else if (likeRate < 200) likeScore = 20;
-    else if (likeRate < 300) likeScore = 30;
-    else likeScore = 40;
-
-    const conversionScore = customScore + likeScore;
-
-    let conversionGrade = '';
-    if (conversionScore >= 95) conversionGrade = 'Conversion++';
-    else if (conversionScore >= 85) conversionGrade = 'Conversion+';
-    else if (conversionScore >= 70) conversionGrade = 'Conversion';
-    else conversionGrade = 'Low';
+    const totalScore = followerScore + likeScore + eprScore;
 
     return {
       Handle: item.Handle,
-      ClassicScore: classicScore,
-      ClassicGrade: classicGrade,
-      ConversionScore: conversionScore,
-      ConversionGrade: conversionGrade
+      EngageScore: totalScore
     };
   });
 
   alert(`총 ${results.length}건의 점수가 계산되었습니다.`);
-  console.log('점수 계산 결과:', results);
+  console.log("계산된 결과:", results);
 }
 
 function renderTable() {
-  resultsTableBody.innerHTML = '';
+  resultsTableBody.innerHTML = ''; // 기존 내용 초기화
+  resultsSection.style.display = 'block'; // 섹션 보이기
 
   if (results.length === 0) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
-    cell.colSpan = 5;
+    cell.colSpan = 2;
     cell.textContent = '결과가 없습니다.';
     row.appendChild(cell);
     resultsTableBody.appendChild(row);
     return;
   }
 
-  results.forEach(result => {
+  results.forEach(item => {
     const row = document.createElement('tr');
 
     const handleCell = document.createElement('td');
-    handleCell.textContent = result.Handle;
+    handleCell.textContent = item.Handle;
 
-    const classicScoreCell = document.createElement('td');
-    classicScoreCell.textContent = result.ClassicScore;
-
-    const classicGradeCell = document.createElement('td');
-    classicGradeCell.textContent = result.ClassicGrade;
-
-    const convScoreCell = document.createElement('td');
-    convScoreCell.textContent = result.ConversionScore;
-
-    const convGradeCell = document.createElement('td');
-    convGradeCell.textContent = result.ConversionGrade;
+    const scoreCell = document.createElement('td');
+    scoreCell.textContent = item.EngageScore.toFixed(1); // 소수점 1자리
 
     row.appendChild(handleCell);
-    row.appendChild(classicScoreCell);
-    row.appendChild(classicGradeCell);
-    row.appendChild(convScoreCell);
-    row.appendChild(convGradeCell);
-
+    row.appendChild(scoreCell);
     resultsTableBody.appendChild(row);
   });
 }
+
+calculateBtn.addEventListener('click', () => {
+  calculateBtn.disabled = true;
+  calculateBtn.textContent = 'Calculating...';
+
+  setTimeout(() => {
+    calculateEngageScores();
+    renderTable();
+
+    calculateBtn.disabled = false;
+    calculateBtn.textContent = 'Calculate Scores';
+  }, 100); // UX용 약간의 딜레이
+});
 
 function downloadCSV() {
   if (results.length === 0) {
@@ -162,44 +130,22 @@ function downloadCSV() {
     return;
   }
 
-  const originalName = csvInput.files[0]?.name?.replace(/\.[^/.]+$/, '') || 'engagement_scores';
   const now = new Date();
-  const timestamp = now.getFullYear().toString()
-    + String(now.getMonth() + 1).padStart(2, '0')
-    + String(now.getDate()).padStart(2, '0') + '_'
-    + String(now.getHours()).padStart(2, '0')
-    + String(now.getMinutes()).padStart(2, '0')
-    + String(now.getSeconds()).padStart(2, '0');
-  const finalFileName = `${originalName}_${timestamp}.csv`;
+  const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, '');
+  const baseName = csvInput.files[0]?.name?.replace(/\.[^/.]+$/, '') || 'engage_scores';
+  const fileName = `${baseName}_${timestamp}.csv`;
 
-  const baseHeaders = Object.keys(rawData[0]);
-  const scoreHeaders = ['Classic Score', 'Classic Grade', 'Conversion Score', 'Conversion Grade'];
-  const fullHeader = [...baseHeaders, ...scoreHeaders];
+  const headers = ['TikTok Handle', 'ENGAGE+ Score'];
+  const rows = results.map(item => [item.Handle, item.EngageScore.toFixed(1)]);
 
-  const fullRows = rawData.map((item, index) => {
-    const result = results[index] || {};
-    const row = baseHeaders.map(k => item[k]);
-    row.push(
-      result.ClassicScore ?? '',
-      result.ClassicGrade ?? '',
-      result.ConversionScore ?? '',
-      result.ConversionGrade ?? ''
-    );
-    return row;
-  });
-
-  const csvContent = [fullHeader, ...fullRows]
+  const csvContent = [headers, ...rows]
     .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
   const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-
-  link.setAttribute('href', url);
-  link.setAttribute('download', finalFileName);
-  link.style.visibility = 'hidden';
-
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -211,35 +157,69 @@ function downloadXLSX() {
     return;
   }
 
-  const baseHeaders = Object.keys(rawData[0]);
-  const scoreHeaders = ['Classic Score', 'Classic Grade', 'Conversion Score', 'Conversion Grade'];
+  const dataForXLSX = results.map(item => ({
+    "TikTok Handle": item.Handle,
+    "ENGAGE+ Score": item.EngageScore.toFixed(1)
+  }));
 
-  const fullData = rawData.map((item, index) => {
-    const result = results[index] || {};
-    return {
-      ...item,
-      'Classic Score': result.ClassicScore ?? '',
-      'Classic Grade': result.ClassicGrade ?? '',
-      'Conversion Score': result.ConversionScore ?? '',
-      'Conversion Grade': result.ConversionGrade ?? ''
-    };
-  });
-
-  const worksheet = XLSX.utils.json_to_sheet(fullData, { header: [...baseHeaders, ...scoreHeaders] });
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Engagement Scores");
+  const ws = XLSX.utils.json_to_sheet(dataForXLSX);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Engage+ Scores");
 
   const now = new Date();
-  const timestamp = now.toISOString().slice(0,19).replace(/[-:T]/g, '');
-  const filename = `${csvInput.files[0]?.name?.replace(/\.[^/.]+$/, '') || 'engagement_scores'}_${timestamp}.xlsx`;
+  const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, '');
+  const baseName = csvInput.files[0]?.name?.replace(/\.[^/.]+$/, '') || 'engage_scores';
+  const fileName = `${baseName}_${timestamp}.xlsx`;
 
-  XLSX.writeFile(workbook, filename);
+  XLSX.writeFile(wb, fileName);
 }
-
-calculateBtn.addEventListener('click', () => {
-  calculateScores();
-  renderTable();
-});
 
 downloadBtn.addEventListener('click', downloadCSV);
 downloadXlsxBtn.addEventListener('click', downloadXLSX);
+
+csvInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (!file.name.endsWith(".csv")) {
+    alert("CSV 파일만 업로드 가능합니다.");
+    csvInput.value = "";
+    return;
+  }
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function (resultsParsed) {
+      const parsed = resultsParsed.data;
+      if (!parsed || parsed.length === 0 || !parsed[0]['2. Tiktok Handle']) {
+        alert("유효한 데이터가 아닙니다. 필수 컬럼이 없습니다.");
+        return;
+      }
+
+      rawData = cleanData(parsed);
+      alert(`총 ${rawData.length}명의 인플루언서가 업로드되었습니다.`);
+      console.log("업로드된 데이터:", rawData);
+      calculateBtn.disabled = false;
+      downloadBtn.disabled = false;
+      downloadXlsxBtn.disabled = false;
+    },
+    error: function (err) {
+      alert("CSV 파싱 중 오류 발생: " + err.message);
+    }
+  });
+});
+
+function cleanData(data) {
+  return data.map(row => ({
+    Handle: row['2. Tiktok Handle'] || '(빈 핸들)',
+    Followers: parseInt((row['Followers'] || '0').replace(/,/g, '')) || 0,
+    Likes: parseInt((row['좋아요 수'] || '0').replace(/,/g, '')) || 0,
+    Views: parseInt((row['Ave. View'] || '0').replace(/,/g, '')) || 1 // 0 방지
+  }));
+}
+
+if (results.length === 0) {
+  alert("다운로드할 데이터가 없습니다.");
+  return;
+}
