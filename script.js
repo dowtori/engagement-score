@@ -81,21 +81,41 @@ function calculateEngageScores() {
 
     // Followers 점수 (50점 만점)
     const followerScore =
-      followers < 1000 ? 35 :
-      followers < 5000 ? 40 :
-      followers < 10000 ? 45 : 50;
+      followers < 1000 ? 35.0 :
+      followers < 3000 ? 36.7 :
+      followers < 5000 ? 38.3 :
+      followers < 7000 ? 40.0 :
+      followers < 10000 ? 41.7 :
+      followers < 20000 ? 43.3 :
+      followers < 30000 ? 45.0 :
+      followers < 50000 ? 46.7 :
+      followers < 100000 ? 48.3 : 50.0;
 
     // Likes 점수 (20점 만점)
     const likeScore =
-      likes < 100 ? 10 :
-      likes < 1000 ? 15 : 20;
+      likes < 200 ? 10.0 :
+      likes < 500 ? 11.1 :
+      likes < 1000 ? 12.2 :
+      likes < 2000 ? 13.3 :
+      likes < 3500 ? 14.4 :
+      likes < 5000 ? 15.6 :
+      likes < 7000 ? 16.7 :
+      likes < 9000 ? 17.8 :
+      likes < 10000 ? 18.9 : 20.0;
 
     // EPR 점수 (30점 만점)
-    const epr = (likes / views) * 100;
+    const epr = views === 0 ? 0 : (likes / views) * 100;
     const eprScore =
-      epr < 10 ? 15 :
-      epr < 20 ? 20 :
-      epr < 30 ? 25 : 30;
+      epr < 5 ? 15.0 :
+      epr < 10 ? 16.7 :
+      epr < 15 ? 18.3 :
+      epr < 20 ? 20.0 :
+      epr < 25 ? 21.7 :
+      epr < 30 ? 23.3 :
+      epr < 35 ? 25.0 :
+      epr < 40 ? 26.7 :
+      epr < 44 ? 28.3 : 30.0;
+
 
     const totalScore = followerScore + likeScore + eprScore;
 
