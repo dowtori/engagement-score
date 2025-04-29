@@ -101,7 +101,7 @@ function calculateEngageScores() {
 
     return {
       Handle: item.Handle,
-      EngageScore: totalScore
+      EngageScore: totalScore,
       EngageGrade: getEngageGrade(totalScore)
     };
   });
