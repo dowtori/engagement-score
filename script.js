@@ -54,7 +54,25 @@ function cleanData(data) {
   }));
 }
 
+function getMergedResults() {
+  return rawData.map((item, index) => {
+    const result = results[index] || {};
+    return {
+      ...item, // 원본 CSV 필드 전체 포함
+      'ENGAGE+ Score': result.EngageScore?.toFixed(1) ?? '',
+      'ENGAGE+ Grade': result.EngageGrade ?? ''
+    };
+  });
+}
+
 // 점수 계산 로직
+function getEngageGrade(score) {
+  if (score >= 91) return "ENGAGE ++";
+  if (score >= 81) return "ENGAGE +";
+  if (score >= 71) return "ENGAGE";
+  return "Low";
+}
+
 function calculateEngageScores() {
   results = rawData.map(item => {
     const followers = item.Followers;
@@ -84,6 +102,7 @@ function calculateEngageScores() {
     return {
       Handle: item.Handle,
       EngageScore: totalScore
+      EngageGrade: getEngageGrade(totalScore)
     };
   });
 
@@ -112,14 +131,15 @@ function renderTable() {
     const handleCell = document.createElement('td');
     handleCell.textContent = item.Handle;
 
-    const scoreCell = document.createElement('td');
-    scoreCell.textContent = item.EngageScore.toFixed(1);
+    const gradeCell = document.createElement('td');
+    gradeCell.textContent = item.EngageGrade; // ✅ 점수 대신 등급
 
     row.appendChild(handleCell);
-    row.appendChild(scoreCell);
+    row.appendChild(gradeCell);
     resultsTableBody.appendChild(row);
   });
 }
+
 
 // 버튼 이벤트
 calculateBtn.addEventListener('click', () => {
@@ -139,7 +159,8 @@ downloadXlsxBtn.addEventListener('click', downloadXLSX);
 
 // CSV 다운로드
 function downloadCSV() {
-  if (results.length === 0) {
+  const merged = getMergedResults();
+  if (merged.length === 0) {
     alert("다운로드할 데이터가 없습니다.");
     return;
   }
@@ -149,8 +170,8 @@ function downloadCSV() {
   const baseName = csvInput.files[0]?.name?.replace(/\.[^/.]+$/, '') || 'engage_scores';
   const fileName = `${baseName}_${timestamp}.csv`;
 
-  const headers = ['TikTok Handle', 'ENGAGE+ Score'];
-  const rows = results.map(item => [item.Handle, item.EngageScore.toFixed(1)]);
+  const headers = Object.keys(merged[0]);
+  const rows = merged.map(obj => headers.map(h => obj[h]));
 
   const csvContent = [headers, ...rows]
     .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
@@ -167,19 +188,15 @@ function downloadCSV() {
 
 // XLSX 다운로드
 function downloadXLSX() {
-  if (results.length === 0) {
+  const merged = getMergedResults();
+  if (merged.length === 0) {
     alert("다운로드할 데이터가 없습니다.");
     return;
   }
 
-  const dataForXLSX = results.map(item => ({
-    "TikTok Handle": item.Handle,
-    "ENGAGE+ Score": item.EngageScore.toFixed(1)
-  }));
-
-  const ws = XLSX.utils.json_to_sheet(dataForXLSX);
+  const ws = XLSX.utils.json_to_sheet(merged);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Engage+ Scores");
+  XLSX.utils.book_append_sheet(wb, ws, "Engage+ Results");
 
   const now = new Date();
   const timestamp = now.toISOString().slice(0, 19).replace(/[-:T]/g, '');
@@ -188,3 +205,4 @@ function downloadXLSX() {
 
   XLSX.writeFile(wb, fileName);
 }
+
